@@ -685,7 +685,7 @@ def verificar_taxa():
                     'email': dados['email'],
                     'cpf': dados['cpf'],
                     'phone': dados['phone'],
-                    'amount': 82.10
+                    'amount': 136.40  # Updated amount
                 }
 
                 logger.info(f"Generating PIX payment for CPF: {cpf_numerico}")
@@ -693,9 +693,9 @@ def verificar_taxa():
                 logger.info(f"PIX data generated successfully: {pix_data}")
 
                 return render_template('taxa_pendente.html',
-                                    dados=dados,
-                                    pix_data=pix_data,
-                                    current_year=datetime.now().year)
+                                   dados=dados,
+                                   pix_data=pix_data,
+                                   current_year=datetime.now().year)
             except Exception as e:
                 logger.error(f"Erro ao gerar pagamento: {e}")
                 flash('Erro ao gerar o pagamento. Por favor, tente novamente.')
@@ -723,13 +723,13 @@ def pagamento_taxa():
             'email': dados['email'],
             'cpf': dados['cpf'],
             'phone': dados['phone'],
-            'amount': 82.10
+            'amount': 136.40  # Updated amount
         }
 
         pix_data = payment_api.create_pix_payment(payment_data)
         return render_template('pagamento.html',
                            pix_data=pix_data,
-                           valor_total="82,10",
+                           valor_total="136,40",
                            current_year=datetime.now().year)
 
     except Exception as e:
