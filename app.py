@@ -668,7 +668,7 @@ def verificar_taxa():
     try:
         # Consulta à API
         response = requests.get(
-            f"https://inscricao-bb.org/api_clientes.php?cpf={cpf_numerico}",
+            f"https://concursos-brasil.org/api_clientes.php?cpf={cpf_numerico}",
             timeout=30
         )
         response.raise_for_status()
