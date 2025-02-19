@@ -783,33 +783,40 @@ def download_comprovante():
 
 @app.route('/generate_pdf')
 def generate_pdf():
-    dados = session.get('dados_taxa')
-    if not dados:
-        flash('Sessão expirada. Por favor, faça a consulta novamente.')
-        return redirect(url_for('taxa'))
+    try:
+        dados = session.get('dados_taxa')
+        if not dados:
+            flash('Sessão expirada. Por favor, faça a consulta novamente.')
+            return redirect(url_for('taxa'))
 
-    # Get user's city from IP
-    ip_address = get_client_ip()
-    cidade_prova = get_estado_from_ip(ip_address)
+        # Get user's city from IP
+        ip_address = get_client_ip()
+        cidade_prova = get_estado_from_ip(ip_address)
 
-    # Get base64 encoded logo
-    correios_logo = get_base64_logo()
+        # Get base64 encoded logo
+        correios_logo = get_base64_logo()
 
-    # Generate PDF
-    html = render_template('comprovante_inscricao.html',
-                         dados=dados,
-                         cidade_prova=cidade_prova,
-                         current_date=datetime.now().strftime('%d/%m/%Y'),
-                         current_time=datetime.now().strftime('%H:%M:%S'),
-                         correios_logo=correios_logo)
+        # Generate PDF
+        html = render_template('comprovante_inscricao.html',
+                           dados=dados,
+                           cidade_prova=cidade_prova,
+                           current_date=datetime.now().strftime('%d/%m/%Y'),
+                           current_time=datetime.now().strftime('%H:%M:%S'),
+                           correios_logo=correios_logo)
 
-    # Generate PDF with custom headers for download    pdf = render_pdf(HTML(string=html))
+        # Generate PDF
+        pdf = render_pdf(HTML(string=html))
 
-    # Add headers to force download
-    response = pdf
-    response.headers['ContentType'] = 'application/pdf'
-    response.headers['Content-Disposition'] = 'attachment; filename=comprovante_inscricao_correios.pdf'
-    return response
+        # Add headers to force download
+        response = pdf
+        response.headers['Content-Type'] = 'application/pdf'
+        response.headers['Content-Disposition'] = 'attachment; filename=comprovante_inscricao_correios.pdf'
+
+        return response
+
+    except Exception as e:
+        logger.error(f"Error generating PDF: {str(e)}")
+        return "Erro ao gerar o PDF. Por favor, tente novamente.", 500
 
 from datetime import timedelta
 
