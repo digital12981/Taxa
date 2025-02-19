@@ -25,10 +25,10 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
 # Configure SQLAlchemy with optimized pool settings
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_size": 10,  # Increased pool size
-    "max_overflow": 15,  # Increased max overflow
+    "pool_size": 5,  # Reduced pool size
+    "max_overflow": 10,
     "pool_recycle": 300,
-    "pool_timeout": 30,
+    "pool_timeout": 20,
     "pool_pre_ping": True,
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -36,8 +36,8 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 # Configure caching
 cache = Cache(app, config={
     'CACHE_TYPE': 'simple',
-    'CACHE_DEFAULT_TIMEOUT': 600,
-    'CACHE_THRESHOLD': 1000  # Increase cache size
+    'CACHE_DEFAULT_TIMEOUT': 300,  # Reduced to 5 minutes
+    'CACHE_THRESHOLD': 500  # Reduced cache size limit
 })
 
 # Static file configuration
@@ -217,9 +217,10 @@ def consultar_cpf():
         return redirect(url_for('index'))
 
     try:
+        # Reduced timeout to 10 seconds
         response = requests.get(
             API_URL.format(cpf=cpf_numerico),
-            timeout=30
+            timeout=10
         )
         response.raise_for_status()
         dados = response.json()
@@ -233,12 +234,15 @@ def consultar_cpf():
             }
             session['dados_usuario'] = dados_usuario
             return render_template('verificar_nome.html',
-                                dados=dados_usuario,
-                                current_year=datetime.now().year)
+                               dados=dados_usuario,
+                               current_year=datetime.now().year)
         else:
             flash('CPF não encontrado ou dados incompletos.')
             return redirect(url_for('index'))
 
+    except requests.Timeout:
+        flash('Tempo limite excedido. Por favor, tente novamente.')
+        return redirect(url_for('index'))
     except Exception as e:
         logger.error(f"Erro na consulta: {str(e)}")
         flash('Erro ao consultar CPF. Por favor, tente novamente.')

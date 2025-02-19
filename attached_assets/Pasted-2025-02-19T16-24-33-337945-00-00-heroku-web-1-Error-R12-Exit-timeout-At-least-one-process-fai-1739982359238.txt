@@ -1,0 +1,19 @@
+2025-02-19T16:24:33.337945+00:00 heroku[web.1]: Error R12 (Exit timeout) -> At least one process failed to exit within 30 seconds of SIGTERM
+2025-02-19T16:24:33.339733+00:00 heroku[web.1]: Stopping remaining processes with SIGKILL
+2025-02-19T16:24:33.449296+00:00 heroku[web.1]: Process exited with status 137
+2025-02-19T16:24:36.879780+00:00 heroku[web.1]: Process running mem=828M(159.6%)
+2025-02-19T16:24:36.881599+00:00 heroku[web.1]: Error R14 (Memory quota exceeded)
+2025-02-19T16:24:43.094274+00:00 heroku[web.1]: Process running mem=877M(171.0%)
+2025-02-19T16:24:43.095951+00:00 heroku[web.1]: Error R14 (Memory quota exceeded)
+2025-02-19T16:24:47.688490+00:00 heroku[web.1]: Error R12 (Exit timeout) -> At least one process failed to exit within 30 seconds of SIGTERM
+2025-02-19T16:24:47.690970+00:00 heroku[web.1]: Stopping remaining processes with SIGKILL
+2025-02-19T16:24:47.786876+00:00 heroku[web.1]: Process exited with status 137
+2025-02-19T16:25:01.139459+00:00 heroku[web.1]: Process running mem=1021M(199.2%)
+2025-02-19T16:25:01.141303+00:00 heroku[web.1]: Error R14 (Memory quota exceeded)
+2025-02-19T16:25:05.544039+00:00 heroku[router]: at=error code=H12 desc="Request timeout" method=GET path="/" host=taxa-271e1946f953.herokuapp.com request_id=3d5acdf5-0154-4925-92dc-1aa4d0d41f5a fwd="189.40.76.33" dyno=web.1 connect=0ms service=30000ms status=503 bytes=0 protocol=https
+2025-02-19T16:25:20.962842+00:00 heroku[web.1]: Process running mem=1070M(208.4%)
+2025-02-19T16:25:20.964752+00:00 heroku[web.1]: Error R15 (Memory quota vastly exceeded)
+2025-02-19T16:25:20.966629+00:00 heroku[web.1]: Stopping process with SIGKILL
+2025-02-19T16:25:21.091545+00:00 heroku[web.1]: Process exited with status 137
+2025-02-19T16:25:21.116183+00:00 heroku[web.1]: State changed from up to crashed
+2025-02-19T16:25:21.048228+00:00 heroku[router]: at=error code=H13 desc="Connection closed without response" method=GET path="/favicon.ico" host=taxa-271e1946f953.herokuapp.com request_id=c2e595f0-722a-4f2d-942f-1e619628d023 fwd="189.40.76.33" dyno=web.1 connect=0ms service=15275ms status=503 bytes=0 protocol=https
