@@ -1,0 +1,14 @@
+flask-migrate==4.1.0
+flask-weasyprint==1.1.0
+flask-sqlalchemy==3.1.1
+trafilatura==2.0.0
+weasyprint==64.0
+flask-login==0.6.3
+flask==3.1.0
+requests==2.32.3
+gevent==24.11.1
+email-validator==2.2.0
+gunicorn==23.0.0
+flask-wtf==1.2.2
+flask-caching==2.3.0
+psycopg2-binary==2.9.10

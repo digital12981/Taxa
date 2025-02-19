@@ -2,7 +2,7 @@ import multiprocessing
 import os
 
 # Número de workers baseado no número de cores
-workers = multiprocessing.cpu_count() * 4 + 1
+workers = multiprocessing.cpu_count() * 2 + 1
 
 # Tempo limite de resposta em segundos
 timeout = 120
@@ -18,10 +18,11 @@ loglevel = 'info'
 
 # Configurações de buffer
 worker_class = 'gevent'
-worker_connections = 2000
+worker_connections = 1000
 
-# Bind to port 5000
-bind = '0.0.0.0:5000'
+# Bind to Heroku's dynamic port
+port = int(os.environ.get('PORT', 5000))
+bind = f'0.0.0.0:{port}'
 
 # Raw env
 raw_env = [
