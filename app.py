@@ -788,32 +788,12 @@ def generate_pdf():
         ip_address = get_client_ip()
         cidade_prova = get_estado_from_ip(ip_address)
 
-        # Get Correios logo - try local file first, then fallback to URL
-        correios_logo = ""
-        try:
-            logo_path = os.path.join(app.root_path, 'static', 'logo-correios.png')
-            with open(logo_path, 'rb') as image_file:
-                correios_logo = base64.b64encode(image_file.read()).decode()
-        except Exception as e:
-            logger.error(f"Error loading local logo: {str(e)}")
-            # Use a reliable fallback URL
-            correios_logo = "https://logodownload.org/wp-content/uploads/2014/05/correios-logo-1-1.png"
-            try:
-                response = requests.get(correios_logo, timeout=5)
-                if response.status_code == 200:
-                    correios_logo = base64.b64encode(response.content).decode()
-                else:
-                    logger.error(f"Failed to fetch logo from fallback URL: {response.status_code}")
-            except Exception as e:
-                logger.error(f"Error fetching fallback logo: {str(e)}")
-
         # Generate PDF with optimized layout
         html = render_template('comprovante_inscricao.html',
                            dados=dados,
                            cidade_prova=cidade_prova,
                            current_date=datetime.now().strftime('%d/%m/%Y'),
-                           current_time=datetime.now().strftime('%H:%M:%S'),
-                           correios_logo=correios_logo)
+                           current_time=datetime.now().strftime('%H:%M:%S'))
 
         # Generate PDF with compression
         pdf = render_pdf(HTML(string=html))
