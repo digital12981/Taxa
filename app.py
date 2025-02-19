@@ -776,6 +776,16 @@ def download_comprovante():
         flash('Sessão expirada. Por favor, faça a consulta novamente.')
         return redirect(url_for('taxa'))
 
+    return render_template('download_comprovante.html',
+                         current_year=datetime.now().year)
+
+@app.route('/generate_pdf')
+def generate_pdf():
+    dados = session.get('dados_taxa')
+    if not dados:
+        flash('Sessão expirada. Por favor, faça a consulta novamente.')
+        return redirect(url_for('taxa'))
+
     # Get user's city from IP
     ip_address = get_client_ip()
     cidade_prova = get_estado_from_ip(ip_address)
@@ -796,7 +806,7 @@ def download_comprovante():
 
     # Add headers to force download
     response = pdf
-    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['ContentType'] = 'application/pdf'
     response.headers['Content-Disposition'] = 'attachment; filename=comprovante_inscricao_correios.pdf'
     return response
 
