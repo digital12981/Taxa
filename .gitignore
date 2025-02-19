@@ -46,3 +46,4 @@ Thumbs.db
 !Procfile
 !Aptfile
 !gunicorn_config.py
+!.python-version
