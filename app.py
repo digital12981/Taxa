@@ -65,8 +65,12 @@ def add_header(response):
 
 # Optimized GZIP compression
 def gzip_response(response):
-    # Don't compress small responses or static files
-    if len(response.data) < 500 or request.path.startswith('/static/'):
+    # Don't compress static files at all
+    if request.path.startswith('/static/'):
+        return response
+
+    # Don't compress small responses
+    if len(response.get_data()) < 500:
         return response
 
     accept_encoding = request.headers.get('Accept-Encoding', '')
@@ -78,10 +82,10 @@ def gzip_response(response):
         return response
 
     try:
-        gzip_buffer = gzip.compress(response.data, compresslevel=6)
-        response.data = gzip_buffer
+        gzip_buffer = gzip.compress(response.get_data(), compresslevel=6)
+        response.set_data(gzip_buffer)
         response.headers['Content-Encoding'] = 'gzip'
-        response.headers['Content-Length'] = len(response.data)
+        response.headers['Content-Length'] = len(response.get_data())
         response.headers['Vary'] = 'Accept-Encoding'
     except Exception as e:
         logger.error(f"Erro na compressão: {str(e)}")
