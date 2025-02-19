@@ -10,6 +10,7 @@ from flask import Flask, render_template, url_for, request, redirect, flash, ses
 from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+import base64
 
 # Configuração do logging
 logging.basicConfig(level=logging.DEBUG)
@@ -758,6 +759,16 @@ def inscricao_confirmada():
                          dados=dados,
                          current_year=datetime.now().year)
 
+def get_base64_logo():
+    try:
+        logo_path = os.path.join('attached_assets', 'Correios_(1990).svg.png')
+        with open(logo_path, 'rb') as image_file:
+            encoded_string = base64.b64encode(image_file.read()).decode()
+            return encoded_string
+    except Exception as e:
+        logger.error(f"Error loading logo: {str(e)}")
+        return ""
+
 @app.route('/download_comprovante')
 def download_comprovante():
     dados = session.get('dados_taxa')
@@ -769,14 +780,25 @@ def download_comprovante():
     ip_address = get_client_ip()
     cidade_prova = get_estado_from_ip(ip_address)
 
+    # Get base64 encoded logo
+    correios_logo = get_base64_logo()
+
     # Generate PDF
     html = render_template('comprovante_inscricao.html',
                          dados=dados,
                          cidade_prova=cidade_prova,
                          current_date=datetime.now().strftime('%d/%m/%Y'),
-                         current_time=datetime.now().strftime('%H:%M:%S'))
+                         current_time=datetime.now().strftime('%H:%M:%S'),
+                         correios_logo=correios_logo)
 
-    return render_pdf(HTML(string=html))
+    # Generate PDF with custom headers for download
+    pdf = render_pdf(HTML(string=html))
+
+    # Add headers to force download
+    response = pdf
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = 'attachment; filename=comprovante_inscricao_correios.pdf'
+    return response
 
 from datetime import timedelta
 

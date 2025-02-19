@@ -5,94 +5,102 @@
     <style>
         @page {
             size: A4;
-            margin: 2cm;
+            margin: 1.5cm;
         }
         body {
             font-family: Arial, sans-serif;
-            line-height: 1.6;
+            line-height: 1.4;
             color: #333;
+            margin: 0;
+            padding: 0;
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
-        }
-        .logo {
-            width: 200px;
             margin-bottom: 20px;
         }
-        .title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #003399;
+        .logo {
+            width: 150px;
             margin-bottom: 10px;
         }
-        .subtitle {
-            font-size: 16px;
-            color: #003399;
-            margin-bottom: 30px;
-        }
-        .section {
-            margin-bottom: 30px;
-        }
-        .section-title {
+        .title {
             font-size: 18px;
             font-weight: bold;
             color: #003399;
-            margin-bottom: 15px;
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #003399;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #003399;
+            margin-bottom: 10px;
             border-bottom: 2px solid #003399;
-            padding-bottom: 5px;
+            padding-bottom: 3px;
         }
         .info-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin-bottom: 15px;
         }
         .info-item {
             background: #f8f9fa;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 8px;
+            border-radius: 4px;
         }
         .info-label {
-            font-size: 12px;
+            font-size: 11px;
             color: #666;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
         .info-value {
+            font-size: 12px;
             font-weight: bold;
             color: #333;
         }
         .rules {
             background: #f8f9fa;
-            padding: 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            font-size: 12px;
         }
         .rules ul {
             margin: 0;
             padding-left: 20px;
         }
+        .rules li {
+            margin-bottom: 5px;
+        }
         .warning {
             background: #fff3cd;
             border: 1px solid #ffeeba;
             color: #856404;
-            padding: 15px;
-            border-radius: 5px;
-            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 15px;
+            font-size: 12px;
         }
         .footer {
             text-align: center;
-            font-size: 12px;
+            font-size: 10px;
             color: #666;
-            margin-top: 30px;
+            margin-top: 15px;
             border-top: 1px solid #ddd;
-            padding-top: 20px;
+            padding-top: 10px;
         }
     </style>
 </head>
 <body>
     <div class="header">
-        <img src="{{ url_for('static', filename='logo-correios.png') }}" alt="Logo dos Correios" class="logo">
+        <img src="data:image/png;base64,{{ correios_logo }}" alt="Logo dos Correios" class="logo">
         <div class="title">CONCURSO PÚBLICO CORREIOS 2025</div>
         <div class="subtitle">COMPROVANTE DE INSCRIÇÃO</div>
     </div>
