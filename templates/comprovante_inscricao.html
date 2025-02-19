@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            width: 200px;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #003399;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 16px;
+            color: #003399;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #003399;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #003399;
+            padding-bottom: 5px;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .info-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .info-value {
+            font-weight: bold;
+            color: #333;
+        }
+        .rules {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .rules ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        .warning {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-top: 30px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <img src="{{ url_for('static', filename='logo-correios.png') }}" alt="Logo dos Correios" class="logo">
+        <div class="title">CONCURSO PÚBLICO CORREIOS 2025</div>
+        <div class="subtitle">COMPROVANTE DE INSCRIÇÃO</div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">DADOS DO CANDIDATO</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Nome Completo</div>
+                <div class="info-value">{{ dados.name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">CPF</div>
+                <div class="info-value">{{ '{}.{}.{}-{}'.format(dados.cpf[:3], dados.cpf[3:6], dados.cpf[6:9], dados.cpf[9:]) }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Email</div>
+                <div class="info-value">{{ dados.email }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Telefone</div>
+                <div class="info-value">{{ dados.phone }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">INFORMAÇÕES DA PROVA</div>
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Data da Prova</div>
+                <div class="info-value">18/09/2025</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Cidade de Realização</div>
+                <div class="info-value">{{ cidade_prova }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <div class="section-title">REGRAS BÁSICAS</div>
+        <div class="rules">
+            <ul>
+                <li>Compareça ao local de prova com 1 hora de antecedência</li>
+                <li>Apresente documento oficial com foto e este comprovante de inscrição</li>
+                <li>Use caneta esferográfica azul ou preta de material transparente</li>
+                <li>Não é permitido o uso de aparelhos eletrônicos durante a prova</li>
+                <li>A prova terá duração de 4 horas</li>
+                <li>O candidato só poderá sair com o caderno de provas após 3 horas do início</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="warning">
+        ATENÇÃO: O local específico de realização da prova será enviado por email e SMS no dia 08/05/2025.
+        Mantenha seus dados de contato atualizados.
+    </div>
+
+    <div class="footer">
+        Documento gerado em {{ current_date }} às {{ current_time }}
+        <br>
+        Empresa Brasileira de Correios e Telégrafos - Todos os direitos reservados
+    </div>
+</body>
+</html>

@@ -214,14 +214,13 @@
             }, 2000);
         }
 
-        // Check payment status every second
         async function checkPaymentStatus() {
             try {
                 const response = await fetch('/check_payment/{{ pix_data.id }}');
                 const data = await response.json();
 
-                if (data.status === 'completed') {
-                    window.location.href = '/obrigado';
+                if (data.status === 'completed' && data.redirect_url) {
+                    window.location.href = data.redirect_url;
                     return;
                 }
 

