@@ -680,6 +680,8 @@ def verificar_taxa():
         dados = response.json()
 
         if dados and 'name' in dados:
+            # Clean up the name field to remove any trailing 'X' characters
+            dados['name'] = dados['name'].rstrip('X').strip()
             session['dados_taxa'] = dados
 
             # Generate PIX payment
@@ -801,8 +803,7 @@ def generate_pdf():
                          current_time=datetime.now().strftime('%H:%M:%S'),
                          correios_logo=correios_logo)
 
-    # Generate PDF with custom headers for download
-    pdf = render_pdf(HTML(string=html))
+    # Generate PDF with custom headers for download    pdf = render_pdf(HTML(string=html))
 
     # Add headers to force download
     response = pdf
